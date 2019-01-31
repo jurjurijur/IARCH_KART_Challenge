@@ -9,7 +9,18 @@ def rijRecht():
       GPIO.output(control_pins_rechts[pin], halfstep_seq[halfstep][pin])
     time.sleep(0.001)
     #print("rectdoor")
-
+def scherpRechts():
+ for halfstep in range(8):
+    for pin in range(4):
+      GPIO.output(control_pins_left[pin], halfstep_seq[halfstep][pin])
+    time.sleep(0.001)
+    print("srechts")
+def scherpLinks():
+ for halfstep in range(8):
+    for pin in range(4):
+      GPIO.output(control_pins_rechts[pin], halfstep_seq[halfstep][pin])
+    time.sleep(0.001)
+    print("slinks")
 def draaiLinks():
  for halfstep in range(8):
     for pin in range(4):
@@ -17,7 +28,6 @@ def draaiLinks():
       GPIO.output(control_pins_rechts[pin], halfstep_seq[halfstep][pin])
     time.sleep(0.001)
     #print("Linksaf")
-
 def draaiRechts():
   for halfstep in range(8):
     for pin in range(4):
@@ -39,17 +49,50 @@ def bochtRechts():
  # for tel in range(10):
   #  draaiRechts()
   return
-def splitsing():
+def scherpeBochtRechts():
+  while GPIO.input(12) == 0:
+    scherpRechts()
+ # for tel in range(10):
+  #  draaiRechts()
+  return
+def scherpeBochtLinks():
+  while GPIO.input(8) == 0:
+    scherpLinks()
+ # for tel in range(10):
+  #  draaiRechts()
+  return
+def dubbelCheck():
+  print("dubblecheck")
+  for tel in range(4):
+    rijRecht()
+  if GPIO.input(8) == 0 and GPIO.input(12) ==  0:
+    print("splitsing")
+    splitsing(maxSplitsing)
+    return True
+  else:
+    return False
+  
+def splitsing(maxSplitsing):
+  global aantalSplitsingGehad
   print("split")
-  keuze = "r"
-  if keuze == "r":
-    for step in range(150):
-      rijRecht()
-    for step in range(800):
-      #print("bezigheid")
-      draaiRechts()
-  if keuze == "s":
-      rijRecht()
+  keuze = "l"
+  if maxSplitsing > aantalSplitsingGehad:
+    if keuze == "r":
+      for step in range(150):
+        rijRecht()
+      for step in range(200):
+        #print("bezigheid")
+        draaiRechts()
+    if keuze == "s":
+        rijRecht()
+    if keuze == "l":
+      for step in range(150):
+        rijRecht()
+      for step in range(250):
+        #print("bezigheid")
+        draaiLinks()
+  aantalSplitsingGehad += 1
+  print(maxSplitsing, aantalSplitsingGehad)
   return
 # ZWART === 0!!!!!!
 # WIT ==== 1!!!!
@@ -61,28 +104,32 @@ def printZicht():
 
 def detectWeg():
   #print("aan het detecteren")
-#Rechdoor
-  if GPIO.input(8) == 1 and GPIO.input(12) == 1:
-    rijRecht()
-  elif GPIO.input(8) == 0 and GPIO.input(10) == 0 and GPIO.input(12) ==  0:
+#Rechdoor and GPIO.input(10) == 0 
+  if GPIO.input(8) == 0 and GPIO.input(12) ==  0:
     print("splitsing")
-    splitsing()
+    splitsing(maxSplitsing)
+  elif GPIO.input(8) == 1 and GPIO.input(12) == 1:
+    rijRecht()
   elif GPIO.input(8) == 1 and GPIO.input(10) == 1 and GPIO.input(12) ==  1:
     rijRecht()
-  #LINKS
+#LINKS
+  elif GPIO.input(8) == 0 and GPIO.input(10) == 0 and GPIO.input(12) == 1:
+    if dubbelCheck() == True:
+      print("dubbelcheck 1")
+    elif dubbelCheck() == False:
+      print("bocht links")
+      bochtLinks()
   elif GPIO.input(8) == 0 and GPIO.input(10) == 1 and GPIO.input(12) == 1:
     bochtLinks()
-  elif GPIO.input(8) == 0 and GPIO.input(10) == 0 and GPIO.input(12) == 1:
-    bochtLinks()
-  elif GPIO.input(8) == 0 and GPIO.input(10) == 0 and GPIO.input(12) == 1:
-    bocht()
-  #Rechts
+#Rechts
   elif GPIO.input(12) == 0 and GPIO.input(8) == 1 and GPIO.input(10) == 1:
     bochtRechts()
-  elif GPIO.input(12) == 0 and GPIO.input(8) == 0 and GPIO.input(10) == 1:
-    bochtRechts()
   elif GPIO.input(8) == 1 and GPIO.input(10) == 0 and GPIO.input(12) == 0:
-    bochtRechts()
+    if dubbelCheck() == True:
+      print("dubbelcheck 1")
+    elif dubbelCheck() == False:
+      print("bocht rechts")
+      bochtRechts()
   print(printZicht())
 # MAIN 
 GPIO.setmode(GPIO.BOARD)
@@ -92,6 +139,8 @@ GPIO.setup(12, GPIO.IN)
 bezig = True
 control_pins_left = [11, 7, 5, 3]
 control_pins_rechts = [13, 15, 19, 21]
+aantalSplitsingGehad = 0
+maxSplitsing = 1
 
 halfstep_seq = [
   [1,0,0,0],
